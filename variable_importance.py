@@ -20,7 +20,7 @@
 ##             y - the outcome
 ##             n - the sample size
 ##  standardized - whether or not to compute the standardized estimator
-## RETURNS: the naive estimate, one-step estimate, se, and CI for one-step
+## RETURNS: the naive estimate and one-step estimate
 def variableImportance(full = None, reduced = None, y = None, n = None, standardized = True):
     import variable_importance_ic as ic
     import numpy as np
