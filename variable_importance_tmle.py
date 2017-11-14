@@ -44,9 +44,10 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
     x_small = np.delete(x, s, 1)
     ## calculate the covariate
     covar = full - reduced
+    off = logit(full)
 
     ## get initial estimate of epsilon
-    eps_init = sm.GLM(endog = y, exog = covar, family = sm.family.Binomial(), offset = full).fit().params
+    eps_init = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit().params
 
     ## update
     new_f = expit(logit(full) + eps_init*covar)
@@ -77,8 +78,9 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
         while abs(eps) > tol:
             ## get the covariate
             covar = f - r
+            off = logit(f)
             ## update epsilon
-            eps = sm.GLM(endog = y, exog = covar, family = sm.family.Binomial(), offset = f).fit().params
+            eps = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit().params
             ## update fitted values
             f = expit(logit(f) + eps*covar)
             # r = SuperLearner(lib, libnames, loss = "L2").fit(x[:,-s], f).predict(x[-s])
