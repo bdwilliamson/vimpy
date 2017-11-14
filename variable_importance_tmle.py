@@ -47,8 +47,8 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
     off = logit(full)
 
     ## get initial estimate of epsilon
-    eps_init = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit().params
-
+    glm = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit()
+    eps_init = glm.params
     ## update
     new_f = expit(logit(full) + eps_init*covar)
     # new_r = SuperLearner(lib, libnames, loss = "L2").fit(x[:,-s], new_f).predict(x[-s])
@@ -64,7 +64,7 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
     new_r = small_mod.predict(x_small)
 
     ## now repeat until convergence
-    epss = np.zeros((1,max_iter))
+    epss = np.zeros(max_iter)
     epss[0] = eps_init
     if eps_init == 0:
         f = new_f
@@ -80,7 +80,8 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
             covar = f - r
             off = logit(f)
             ## update epsilon
-            eps = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit().params
+            glm = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit()
+            eps = glm.params
             ## update fitted values
             f = expit(logit(f) + eps*covar)
             # r = SuperLearner(lib, libnames, loss = "L2").fit(x[:,-s], f).predict(x[-s])
@@ -95,7 +96,7 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
             k = k+1
 
     ## variable importance
-    est = np.mean((f - r)**2)/np.mean((y - np.mean(y))**2)
+    est = np.array([np.mean((f - r)**2)/np.mean((y - np.mean(y))**2)])
     ## standard error
     se = variableImportanceSE(full = f, reduced = r, y = y, n = len(y), standardized = True)
     ## ci
