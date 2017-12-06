@@ -19,7 +19,7 @@
 ##       reduced - the model fit to the reduced data
 ##             y - the outcome
 ##             x - the covariates
-##             s - the features to remove
+##             s - the features to remove (MUST BE A LIST)
 ##           lib - the library for Super Learner
 ##      libnames - the names for Super Learner
 ##           tol - the tolerance level for convergence to zero
@@ -29,53 +29,66 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
     import numpy as np
     from variable_importance_se import variableImportanceSE
     from variable_importance_ci import variableImportanceCI
+    from variable_importance_ic import variableImportanceIC
     import statsmodels.api as sm
     # from supylearner import *
     from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor
     from sklearn.tree import DecisionTreeRegressor
     from sklearn.model_selection import KFold, cross_val_score, GridSearchCV
+    import pdb
 
     def expit(x):
         return np.exp(x)/(1. + np.exp(x))
     def logit(x):
         return np.log(x/(1. - x))
 
-    ## set up small x
-    x_small = np.delete(x, s, 1)
-    ## calculate the covariate
-    covar = full - reduced
+    ## calculate the covariate and offset
+    covar = full.reshape(len(y),1) - reduced
     off = logit(full)
 
     ## get initial estimate of epsilon
     glm = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit()
-    eps_init = glm.params
-    ## update
-    new_f = expit(logit(full) + eps_init*covar)
-    # new_r = SuperLearner(lib, libnames, loss = "L2").fit(x[:,-s], new_f).predict(x[-s])
-    ## CV to get new reduced model
-    cv_r = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = grid, cv = V)
-    cv_r.fit(x_small, new_f)
-    ntree_r = cv_r.best_params_['n_estimators']
-    lr_r = cv_r.best_params_['learning_rate']
-    ## fit reduced model
-    small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
-    small_mod.fit(x_small, new_f)
-    ## get fitted values
-    new_r = small_mod.predict(x_small)
+    eps = glm.params
 
+    ## update
+    new_f = expit(logit(full) + np.dot(covar, eps))
+
+    ## CV to get new reduced model for each s
+    new_rs = np.zeros((len(y), len(s)))
+    counter = 0
+    for i in s:
+        ## small data
+        x_small = np.delete(x, i, 1)
+        cv_r = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = grid, cv = V)
+        cv_r.fit(x_small, new_f)
+        ntree_r = cv_r.best_params_['n_estimators']
+        lr_r = cv_r.best_params_['learning_rate']
+        ## fit reduced model
+        small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
+        small_mod.fit(x_small, new_f)
+        ## get fitted values
+        new_r = small_mod.predict(x_small)
+        new_rs[:, counter] = new_r[:]
+        counter = counter + 1
+
+    ## debug location
+    pdb.set_trace()
+    ## now compute the empirical average
+    avg = np.apply_along_axis(np.mean, 1, np.apply_along_axis(variableImportanceIC, 1, new_rs, new_f, y = y))
     ## now repeat until convergence
-    epss = np.zeros(max_iter)
-    epss[0] = eps_init
-    if eps_init == 0:
+    avgs = np.zeros((len(s), max_iter))
+    avgs[:,0] = avg
+    if max(abs(avg)) < tol:
         f = new_f
         r = new_r
-        eps = eps_init
+        avg = avg
     else:
         f = new_f
         r = new_r
-        eps = eps_init
+        k = 0
+        avgs[:, k] = avg[:]
         k = 1
-        while abs(eps) > tol:
+        while (max(abs(avg)) > tol) & (k < max_iter):
             ## get the covariate
             covar = f - r
             off = logit(f)
@@ -83,17 +96,30 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
             glm = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit()
             eps = glm.params
             ## update fitted values
-            f = expit(logit(f) + eps*covar)
-            # r = SuperLearner(lib, libnames, loss = "L2").fit(x[:,-s], f).predict(x[-s])
-            cv_r = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = grid, cv = V)
-            cv_r.fit(x_small, f)
-            ntree_r = cv_r.best_params_['n_estimators']
-            lr_r = cv_r.best_params_['learning_rate']
-            small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
-            small_mod.fit(x_small, f)
-            r = small_mod.predict(x_small)
-            epss[k] = eps
+            f = expit(logit(f) + np.dot(covar, eps))
+            ## CV to get new reduced model for each s
+            new_rs = np.zeros((len(y), len(s)))
+            counter = 0
+            for i in s:
+                ## small data
+                x_small = np.delete(x, i, 1)
+                cv_r = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = grid, cv = V)
+                cv_r.fit(x_small, f)
+                ntree_r = cv_r.best_params_['n_estimators']
+                lr_r = cv_r.best_params_['learning_rate']
+                ## fit reduced model
+                small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
+                small_mod.fit(x_small, f)
+                ## get fitted values
+                new_r = small_mod.predict(x_small)
+                new_rs[:, counter] = new_r[:]
+                counter = counter + 1
+
+            ## get the average
+            avg = np.apply_along_axis(np.mean, 1, np.apply_along_axis(variableImportanceIC, 1, new_rs, f, y = y))
             k = k+1
+            avgs[:,k] = avg
+            
 
     ## variable importance
     est = np.array([np.mean((f - r)**2)/np.mean((y - np.mean(y))**2)])
