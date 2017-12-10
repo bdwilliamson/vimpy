@@ -37,21 +37,31 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
     from sklearn.model_selection import KFold, cross_val_score, GridSearchCV
     import pdb
 
+    ## check shape of y, full, reduced; if not arrays (with second shape), then make them arrays
+    y_len = len(y)
+    if len(y.shape) == 1:
+        y = y.reshape(y_len, 1)
+    if len(full.shape) == 1:
+        full = full.reshape(y_len, 1)
+    if len(reduced.shape) == 1:
+        reduced = reduced.reshape(y_len, 1)
+
     def expit(x):
         return np.exp(x)/(1. + np.exp(x))
+
     def logit(x):
         return np.log(x/(1. - x))
 
     ## calculate the covariate and offset
-    covar = full.reshape(len(y),1) - reduced
+    covar = full - reduced
     off = logit(full)
 
     ## get initial estimate of epsilon
-    glm = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit()
+    glm = sm.GLM(endog = y.reshape(-1), exog = covar, family = sm.families.Binomial(), offset = off.reshape(-1)).fit()
     eps = glm.params
 
     ## update
-    new_f = expit(logit(full) + np.dot(covar, eps))
+    new_f = expit(logit(full) + np.dot(covar, eps).reshape(y_len, 1))
 
     ## CV to get new reduced model for each s
     new_rs = np.zeros((len(y), len(s)))
@@ -60,31 +70,35 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
         ## small data
         x_small = np.delete(x, i, 1)
         cv_r = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = grid, cv = V)
-        cv_r.fit(x_small, new_f)
-        ntree_r = cv_r.best_params_['n_estimators']
-        lr_r = cv_r.best_params_['learning_rate']
-        ## fit reduced model
-        small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
-        small_mod.fit(x_small, new_f)
+        cv_r.fit(x_small, new_f.reshape(-1))
         ## get fitted values
-        new_r = small_mod.predict(x_small)
+        new_r = cv_r.best_estimator_.predict(x_small)
+        # ntree_r = cv_r.best_params_['n_estimators']
+        # lr_r = cv_r.best_params_['learning_rate']
+        # ## fit reduced model
+        # small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
+        # small_mod.fit(x_small, new_f.reshape(-1))
+        # ## get fitted values
+        # new_r = small_mod.predict(x_small)
         new_rs[:, counter] = new_r[:]
         counter = counter + 1
 
-    ## debug location
     pdb.set_trace()
+
     ## now compute the empirical average
-    avg = np.apply_along_axis(np.mean, 1, np.apply_along_axis(variableImportanceIC, 1, new_rs, new_f, y = y))
+    new_f_len = len(new_f)
+    new_f_array = new_f.reshape(new_f_len, 1)
+    avg = np.apply_along_axis(np.mean, 0, variableImportanceIC(new_rs, new_f, y))
     ## now repeat until convergence
     avgs = np.zeros((len(s), max_iter))
     avgs[:,0] = avg
     if max(abs(avg)) < tol:
         f = new_f
-        r = new_r
+        r = new_rs
         avg = avg
     else:
         f = new_f
-        r = new_r
+        r = new_rs
         k = 0
         avgs[:, k] = avg[:]
         k = 1
