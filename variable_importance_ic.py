@@ -20,10 +20,8 @@
 ## RETURNS: influence curve fit to the data
 def variableImportanceIC(full = None, reduced = None, y = None, standardized = True):
     import numpy as np
-    import pdb
+    
     ## calculate naive estimates
-    pdb.set_trace()
-
     naive_j = np.mean(np.square(full - reduced))
     naive_var = np.mean(np.square(y - np.mean(y)))
     
