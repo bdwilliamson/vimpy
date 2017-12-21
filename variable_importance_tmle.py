@@ -14,7 +14,7 @@
 
 ## relies on variableImportanceIC to calculate the influence curve
 
-## FUNCTION: variableImportance
+## FUNCTION: variableImportanceTMLE
 ## ARGS:    full - the model fit to the full data
 ##       reduced - the model fit to the reduced data
 ##             y - the outcome
@@ -35,7 +35,6 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
     from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor
     from sklearn.tree import DecisionTreeRegressor
     from sklearn.model_selection import KFold, cross_val_score, GridSearchCV
-    import pdb
 
     ## check shape of y, full, reduced; if not arrays (with second shape), then make them arrays
     y_len = len(y)
@@ -83,12 +82,10 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
         new_rs[:, counter] = new_r[:]
         counter = counter + 1
 
-    pdb.set_trace()
-
     ## now compute the empirical average
     new_f_len = len(new_f)
     new_f_array = new_f.reshape(new_f_len, 1)
-    avg = np.apply_along_axis(np.mean, 0, variableImportanceIC(new_rs, new_f, y))
+    avg = np.apply_along_axis(np.mean, 0, variableImportanceIC(new_f, new_rs, y))
     ## now repeat until convergence
     avgs = np.zeros((len(s), max_iter))
     avgs[:,0] = avg
@@ -107,10 +104,10 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
             covar = f - r
             off = logit(f)
             ## update epsilon
-            glm = sm.GLM(endog = y, exog = covar, family = sm.families.Binomial(), offset = off).fit()
+            glm = sm.GLM(endog = y.reshape(-1), exog = covar, family = sm.families.Binomial(), offset = off.reshape(-1)).fit()
             eps = glm.params
             ## update fitted values
-            f = expit(logit(f) + np.dot(covar, eps))
+            f = expit(logit(f) + np.dot(covar, eps).reshape(y_len, 1))
             ## CV to get new reduced model for each s
             new_rs = np.zeros((len(y), len(s)))
             counter = 0
@@ -118,19 +115,20 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
                 ## small data
                 x_small = np.delete(x, i, 1)
                 cv_r = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = grid, cv = V)
-                cv_r.fit(x_small, f)
-                ntree_r = cv_r.best_params_['n_estimators']
-                lr_r = cv_r.best_params_['learning_rate']
-                ## fit reduced model
-                small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
-                small_mod.fit(x_small, f)
+                cv_r.fit(x_small, f.reshape(-1))
+                # ntree_r = cv_r.best_params_['n_estimators']
+                # lr_r = cv_r.best_params_['learning_rate']
+                # ## fit reduced model
+                # small_mod = GradientBoostingRegressor(loss = 'ls', learning_rate = lr_r, max_depth = 1, n_estimators = ntree_r)
+                # small_mod.fit(x_small, f)
                 ## get fitted values
-                new_r = small_mod.predict(x_small)
+                # new_r = small_mod.predict(x_small)
+                new_r = cv_r.best_estimator_.predict(x_small)
                 new_rs[:, counter] = new_r[:]
                 counter = counter + 1
 
             ## get the average
-            avg = np.apply_along_axis(np.mean, 1, np.apply_along_axis(variableImportanceIC, 1, new_rs, f, y = y))
+            avg = np.apply_along_axis(np.mean, 0, variableImportanceIC(f, new_rs, y))
             k = k+1
             avgs[:,k] = avg
             

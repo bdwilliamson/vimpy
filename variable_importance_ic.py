@@ -20,16 +20,20 @@
 ## RETURNS: influence curve fit to the data
 def variableImportanceIC(full = None, reduced = None, y = None, standardized = True):
     import numpy as np
-    
+
     ## calculate naive estimates
-    naive_j = np.mean(np.square(full - reduced))
+    if len(reduced.shape) > 1:
+        naive_j = np.mean(np.square(full - reduced), axis = 0).reshape(1, reduced.shape[1])    
+    else :
+        naive_j = np.mean(np.square(full - reduced))
     naive_var = np.mean(np.square(y - np.mean(y)))
     
     ## now calculate ic
     if(standardized):
         ret = (2*np.multiply(y - full, full - reduced) + np.square(full - reduced) - naive_j)/naive_var - (np.square(y - np.mean(y)) - naive_var)*naive_j/(naive_var ** 2)
-        
+        # ret = (2*(y - full)*(full - reduced) + (full - reduced)**2 - naive_j)/naive_var - ((y - np.mean(y))**2 - naive_var)*naive_j/(naive_var ** 2)
     else:
         ret = (2*np.multiply(y - full, full - reduced) + np.square(full - reduced) - naive_j)
+        # ret = (2*(y - full)*(full - reduced) + (full - reduced)**2 - naive_j)
     
     return ret
