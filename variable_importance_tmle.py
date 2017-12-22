@@ -129,18 +129,18 @@ def variableImportanceTMLE(full = None, reduced = None, y = None, x = None, s = 
 
             ## get the average
             avg = np.apply_along_axis(np.mean, 0, variableImportanceIC(f, new_rs, y))
-            k = k+1
             avgs[:,k] = avg
+            k = k+1
             
 
     ## variable importance
-    est = np.array([np.mean((f - r)**2)/np.mean((y - np.mean(y))**2)])
+    est = np.array([np.mean((f - r)**2)/np.mean((y - np.mean(y))**2, axis = 0)])
     ## standard error
     se = variableImportanceSE(full = f, reduced = r, y = y, n = len(y), standardized = True)
     ## ci
     ci = variableImportanceCI(est = est, se = se, n = len(y), level = 0.95)
     ## return
-    ret = {'est':est, 'se':se, 'ci':ci, 'full':f, 'reduced':r, 'eps':eps}
+    ret = {'est':est, 'se':se, 'ci':ci, 'full':f, 'reduced':r, 'avg':avg}
     return ret
   
   
