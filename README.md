@@ -11,7 +11,7 @@ In predictive modeling applications, it is often of interest to determine the re
 
 ## Installation
 
-You may install a stable release of `vimpy` using conda by
+You may install a stable release of `vimpy` using `pip` by running `python pip install vimpy` from a Terminal window. Alternatively, you may install within a `virtualenv` environment.
 
 You may install the current dev releast of `vimpy` by downloading this repository directly.
 
