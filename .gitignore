@@ -1,3 +1,11 @@
 # pyc files #
 # --------- #
 *.pyc
+
+# all things for pypi #
+# ------------------- #
+dist/*
+build/*
+test/*
+setup.py
+vimpy.egg*
