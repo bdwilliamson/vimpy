@@ -16,4 +16,4 @@
 from vimp_deviance import vimp_deviance
 from vimp_regression import vimp_regression
 
-name = "vimpy"
+# name = "vimpy"
