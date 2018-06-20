@@ -13,7 +13,6 @@
 ## ------ ---- --------
 #######################################################################################################
 
-from vimp_deviance import vimp_deviance
+name = "vimpy"
 from vimp_regression import vimp_regression
-
-# name = "vimpy"
+from vimp_deviance import vimp_deviance
