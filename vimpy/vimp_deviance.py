@@ -13,10 +13,11 @@
 ##             s     - the set of features for importance
 #######################################################################################
 
+## import required libraries
+import numpy as np
+from scipy.stats import norm
+
 class vimp_deviance:
-    ## import required libraries
-    import numpy as np
-    from scipy.stats import norm
 
 	## define initialization values
     """
@@ -42,10 +43,10 @@ class vimp_deviance:
 
 	## calculate the plug-in estimator
     def plugin(self):
-		numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
-		denominator = (-1)*np.sum(np.log(self.p_))
-		self.naive_ = np.array([numerator/denominator])
-		return(self)
+        numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
+        denominator = (-1)*np.sum(np.log(self.p_))
+        self.naive_ = np.array([numerator/denominator])
+        return(self)
 
 	## calculate the update
     def update(self):

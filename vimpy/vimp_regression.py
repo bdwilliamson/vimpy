@@ -15,11 +15,12 @@
 ##             s - the set of features for importance
 ################################################################################
 
-class vimp_regression:
-    ## import required libraries
-    import numpy as np
-    from scipy.stats import norm
+## import required libraries
+import numpy as np
+from scipy.stats import norm
 
+class vimp_regression:
+    
     ## define initialization values
     """
     y is the outcome
