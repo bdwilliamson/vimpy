@@ -1,5 +1,6 @@
 # vimpy: nonparametric variable importance assessment in python
 
+[![PyPI version](https://badge.fury.io/py/vimpy.svg)](https://badge.fury.io/py/vimpy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
