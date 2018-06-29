@@ -31,7 +31,8 @@ class vimp_deviance:
 		self.y_ = y
 		self.x_ = x
 		self.n_ = y.shape[0]
-		self.p_ = np.c_[np.mean(y), 1 - np.mean(y)]
+		# self.p_ = np.c_[np.mean(y), 1 - np.mean(y)]
+        self.p_ = np.mean(y, axis = 0)
 		self.f_ = f
 		self.m_ = m
 		self.s_ = s
@@ -43,14 +44,16 @@ class vimp_deviance:
 
 	## calculate the plug-in estimator
     def plugin(self):
-        numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
+        # numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
+        numerator = 2*np.mean(np.sum(self.f_*np.log(self.f_/self.m_), axis = 1))
         denominator = (-1)*np.sum(np.log(self.p_))
         self.naive_ = np.array([numerator/denominator])
         return(self)
 
 	## calculate the update
     def update(self):
-		numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
+		# numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
+        numerator = 2*np.mean(np.sum(self.f_*np.log(self.f_/self.m_), axis = 1))
 		denominator = (-1)*np.sum(np.log(self.p_))
 		
 		## influence function of the numerator
