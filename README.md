@@ -96,4 +96,29 @@ vimp.onestep_based_estimator()
 vimp.onestep_based_se()
 ## get a confidence interval
 vimp.get_ci()
+
+## -------------------------------------------------------------
+## get variable importance estimates using cross-validation
+## -------------------------------------------------------------
+full_fits = [None]*V
+small_fits = [None]*V
+for v in range(V):
+    cv_full.fit(x[folds == v, :], y[folds == v])
+    full_fits[v] = cv_full.best_estimator_.predict(x[folds == v, :])
+    x_small = np.delete(x[folds == v, :], s, 1) # delete the columns in s
+    cv_small.fit(x_small, full_fits[v])
+    small_fits[v] = cv_small.best_estimator_.predict(x_small)
+
+## set up the outcome and vimp object
+ys = [y[folds == v] for v in range(V)]
+vimp_cv = vimpy.cv_vim(ys, x, full_fits, small_fits, V, folds, "regression", s)
+## get the naive estimator
+vimp_cv.plugin()
+## get the corrected estimator
+vimp_cv.update()
+vimp_cv.onestep_based_estimator()
+## get a standard error
+vimp_cv.onestep_based_se()
+## get a confidence interval
+vimp_cv.get_ci()
 ```
