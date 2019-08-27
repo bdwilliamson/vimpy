@@ -1,26 +1,10 @@
-###############################################################################
-##
-## FILE:    vimp_regression.py
-##
-## CREATED: 15 June 2018
-##
-## AUTHOR:  Brian Williamson
-##
-## PURPOSE: Python class for variable importance based on squared error measure
-## 
-## PARAMETERS: y - the outcome Y
-##             x - the data
-##             f - the fitted values from the full regression
-##             m - the fitted values from the reduced regression
-##             s - the set of features for importance
-################################################################################
-
 ## import required libraries
 import numpy as np
 from scipy.stats import norm
 
+
 class vimp_regression:
-    
+
     ## define initialization values
     """
     y is the outcome
@@ -44,6 +28,7 @@ class vimp_regression:
         self.ci_ = []
 
     ## calculate the plug-in estimator
+    @deprecated
     def plugin(self):
         numerator = np.mean((self.f_ - self.m_) ** 2)
         denominator = np.mean((self.y_ - np.mean(self.y_)) ** 2)
@@ -51,13 +36,14 @@ class vimp_regression:
         return(self)
 
     ## calculate the update
+    @deprecated
     def update(self):
         if len(self.m_.shape) > 1:
-            naive_j = np.mean(np.square(self.f_ - self.m_), axis = 0).reshape(1, self.m_.shape[1])    
+            naive_j = np.mean(np.square(self.f_ - self.m_), axis = 0).reshape(1, self.m_.shape[1])
         else :
             naive_j = np.mean(np.square(self.f_ - self.m_))
         denominator = np.mean(np.square(self.y_ - np.mean(self.y_)))
-        
+
         ## influence function of the numerator
         d_s = 2*np.multiply(self.y_ - self.f_, self.f_ - self.m_) + np.square(self.f_ - self.m_) - naive_j
         ## influence function of the denominator
@@ -67,17 +53,20 @@ class vimp_regression:
         return self
 
     ## calculate the variable importance based on the one-step
+    @deprecated
     def onestep_based_estimator(self):
         self.vimp_ = self.naive_ + np.mean(self.update_)
         return self
 
     ## calculate the standard error based on the one-step correction
+    @deprecated
     def onestep_based_se(self):
         var = np.mean(self.update_ ** 2)
         self.se_ = np.sqrt(var/self.n_)
         return self
 
     ## calculate the ci based on the estimate and the standard error
+    @deprecated
     def get_ci(self, level = 0.95):
         ## get alpha from the level
         a = (1 - level)/2.

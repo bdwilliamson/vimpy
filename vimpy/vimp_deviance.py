@@ -17,8 +17,8 @@
 import numpy as np
 from scipy.stats import norm
 
-class vimp_deviance:
 
+class vimp_deviance:
     ## define initialization values
     """
     y is the outcome
@@ -42,6 +42,7 @@ class vimp_deviance:
         self.ci_ = []
 
     ## calculate the plug-in estimator
+    @deprecated
     def plugin(self):
         # numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
         numerator = 2*np.mean(np.sum(self.f_*np.log(self.f_/self.m_), axis = 1))
@@ -50,11 +51,12 @@ class vimp_deviance:
         return(self)
 
     ## calculate the update
+    @deprecated
     def update(self):
         # numerator = 2*np.sum(np.diag(np.dot(np.transpose(self.f_), np.log(self.f_/self.m_)))/self.n_)
         numerator = 2*np.mean(np.sum(self.f_*np.log(self.f_/self.m_), axis = 1))
         denominator = (-1)*np.sum(np.log(self.p_))
-        
+
         ## influence function of the numerator
         d_s = 2*np.sum(self.y_*np.log(self.f_/self.m_) - (self.f_ - self.m_), axis = 1) - numerator
         ## influence function of the denominator
@@ -64,17 +66,20 @@ class vimp_deviance:
         return self
 
     ## calculate the variable importance based on the one-step
+    @deprecated
     def onestep_based_estimator(self):
         self.vimp_ = self.naive_ + np.mean(self.update_)
         return self
 
     ## calculate the standard error based on the one-step correction
+    @deprecated
     def onestep_based_se(self):
         var = np.mean(self.update_ ** 2)
         self.se_ = np.sqrt(var/self.n_)
         return self
 
     ## calculate the ci based on the estimate and the standard error
+    @deprecated
     def get_ci(self, level = 0.95):
         ## get alpha from the level
         a = (1 - level)/2.
