@@ -4,7 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-**Author:** Brian Williamson
+**Software author:** [Brian Williamson](https://bdwilliamson.github.io/)
+
+**Methodology authors:** [Brian Williamson](https://bdwilliamson.github.io/), [Peter Gilbert](https://www.fredhutch.org/en/faculty-lab-directory/gilbert-peter.html), [Noah Simon](http://faculty.washington.edu/nrsimon/), [Marco Carone](http://faculty.washington.edu/mcarone/about.html)
 
 ## Introduction
 
@@ -36,17 +38,17 @@ from sklearn.model_selection import GridSearchCV
 ## -------------------------------------------------------------
 ## define a function for the conditional mean of Y given X
 def cond_mean(x = None):
-    f1 = np.where(np.logical_and(-2 <= x[:, 0], x[:, 0] < 2), np.floor(x[:, 0]), 0) 
+    f1 = np.where(np.logical_and(-2 <= x[:, 0], x[:, 0] < 2), np.floor(x[:, 0]), 0)
     f2 = np.where(x[:, 1] <= 0, 1, 0)
     f3 = np.where(x[:, 2] > 0, 1, 0)
-    
+
     f6 = np.absolute(x[:, 5]/4) ** 3
     f7 = np.absolute(x[:, 6]/4) ** 5
-    
+
     f11 = (7./3)*np.cos(x[:, 10]/2)
-    
+
     ret = f1 + f2 + f3 + f6 + f7 + f11
-    
+
     return ret
 
 ## create data
@@ -66,7 +68,7 @@ y = cond_mean(x) + np.random.normal(0, 1, n)
 ## use grid search to get optimal number of trees and learning rate
 ntrees = np.arange(100, 3500, 500)
 lr = np.arange(.01, .5, .05)
-    
+
 param_grid = [{'n_estimators':ntrees, 'learning_rate':lr}]
 
 ## set up cv objects
