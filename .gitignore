@@ -1,11 +1,15 @@
-# pyc files #
-# --------- #
+# pyc files
+# ---------
 *.pyc
 
-# all things for pypi #
-# ------------------- #
+# all things for pypi
+# -------------------
 dist/*
 build/*
 test/*
-setup.py
 vimpy.egg*
+
+# virtual environment
+# -------------------
+venv/
+README_cv.md

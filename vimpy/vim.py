@@ -1,4 +1,4 @@
-## Python class for cross-validated estimates of variable importance
+## Python class for estimates of variable importance
 ## compute estimates and confidence intervals, do hypothesis testing
 
 ## import required libraries
@@ -7,7 +7,7 @@ from scipy.stats import norm
 import predictiveness_measures as mp
 import utils as uts
 
-class cv_vim:
+class vim:
 
     ## define initialization values
     """
@@ -15,18 +15,18 @@ class cv_vim:
     @param x the feature data
     @param s the feature group of interest
     @param pred_func the function that predicts outcome given features
-    @param V the number of cross-validation folds
     @param measure_type the predictiveness measure to use (for now, one of "r_squared", "auc", "accuracy", "deviance")
     @param na_rm remove NAs prior to computing predictiveness?
+
+    @return an object of class vim
     """
-    def __init__(self, y, x, s, pred_func, V, measure_type, na_rm):
+    def __init__(self, y, x, f, m, s, measure_type):
         self.y_ = y
         self.x_ = x
-        self.s_ = s
         self.n_ = y.shape[0]
         self.p_ = x.shape[1]
         self.pred_func_ = pred_func
-        self.V_ = V
+
         self.measure_type_ = measure_type
         self.measure_ = uts.get_measure_function(measure_type)
         self.ic_ = []
@@ -51,10 +51,11 @@ class cv_vim:
         ## if only two unique values in y, assume binary
         self.binary_ = (np.unique(y).shape[0] == 2)
 
-    ## calculate the plug-in estimator
+
+    ## calculate the variable importance estimate
     def get_point_est(self):
-        self.v_full_, self.preds_full_, self.ic_full_ = mp.cv_predictiveness(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], np.arange(self.p_), self.measure_, self.pred_func, V = self.V_, stratified = self.binary_, na_rm = self.na_rm_)
-        self.v_redu_, self.preds_redu_, self.ic_redu_ = mp.cv_predictiveness(self.x_[self.folds_outer_ == 0, :], self.y_[self.folds_outer_ == 0], np.arange(self.p_).delete(self.s_), self.measure_, self.pred_func, V = self.V_, stratified = self.binary_, na_rm = self.na_rm_)
+        self.v_full_, self.preds_full_, self.ic_full_ = mp.cv_predictiveness(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], np.arange(self.p_), self.measure_, self.pred_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_)
+        self.v_redu_, self.preds_redu_, self.ic_redu_ = mp.cv_predictiveness(self.x_[self.folds_outer_ == 0, :], self.y_[self.folds_outer_ == 0], np.arange(self.p_).delete(self.s_), self.measure_, self.pred_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_)
         self.vimp_ = self.v_full_ - self.v_redu_
         return self
 
