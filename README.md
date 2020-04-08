@@ -26,7 +26,7 @@ If you encounter any bugs or have any specific feature requests, please [file an
 
 ## Example
 
-This example shows how to use `vimpy` in a simple setting with simulated data and using a single regression function. For more examples and detailed explanation, please see the [`R` vignette](https://cran.r-project.org/web/packages/vimp/vignettes/introduction_to_vimp.html).
+This example shows how to use `vimpy` in a simple setting with simulated data and using a single regression function. For more examples and detailed explanation, please see the [`R` vignette](https://github.com/bdwilliamson/vimp/blob/master/vignettes/introduction_to_vimp.Rmd).
 
 ```python
 ## load required libraries
