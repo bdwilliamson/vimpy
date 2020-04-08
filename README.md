@@ -12,7 +12,7 @@
 
 In predictive modeling applications, it is often of interest to determine the relative contribution of subsets of features in explaining an outcome; this is often called variable importance. It is useful to consider variable importance as a function of the unknown, underlying data-generating mechanism rather than the specific predictive algorithm used to fit the data. This package provides functions that, given fitted values from predictive algorithms, compute nonparametric estimates of variable importance based on $R^2$, deviance, classification accuracy, and area under the receiver operating characteristic curve, along with asymptotically valid confidence intervals for the true importance.
 
-For more details, please see the accompanying manuscripts [Williamson et al. (Biometrics, 2020)](), [Williamson et al. (arXiv, 2020)](), and [Williamson and Feng (arXiv, 2020)]().
+For more details, please see the accompanying manuscripts "Nonparametric variable importance assessment using machine learning techniques" by Williamson, Gilbert, Carone, and Simon (*Biometrics*, 2020), "A unified approach for inference on algorithm-agnostic variable importance" by Williamson, Gilbert, Simon, and Carone (*arXiv*, 2020), and "A unified approach for assessing population feature importance using Shapley values" by Williamson and Feng (*arXiv*, 2020).
 
 ## Installation
 
