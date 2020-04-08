@@ -10,7 +10,9 @@
 
 ## Introduction
 
-In predictive modeling applications, it is often of interest to determine the relative contribution of subsets of features in explaining an outcome; this is often called variable importance. It is useful to consider variable importance as a function of the unknown, underlying data-generating mechanism rather than the specific predictive algorithm used to fit the data. This package provides functions that, given fitted values from predictive algorithms, compute nonparametric estimates of deviance- and variance-based variable importance, along with asymptotically valid confidence intervals for the true importance.
+In predictive modeling applications, it is often of interest to determine the relative contribution of subsets of features in explaining an outcome; this is often called variable importance. It is useful to consider variable importance as a function of the unknown, underlying data-generating mechanism rather than the specific predictive algorithm used to fit the data. This package provides functions that, given fitted values from predictive algorithms, compute nonparametric estimates of variable importance based on $R^2$, deviance, classification accuracy, and area under the receiver operating characteristic curve, along with asymptotically valid confidence intervals for the true importance.
+
+For more details, please see the accompanying manuscripts [Williamson et al. (Biometrics, 2020)](), [Williamson et al. (arXiv, 2020)](), and [Williamson and Feng (arXiv, 2020)]().
 
 ## Installation
 
@@ -24,7 +26,7 @@ If you encounter any bugs or have any specific feature requests, please [file an
 
 ## Example
 
-This example shows how to use `vimpy` in a simple setting with simulated data and using a single regression function. For more examples and detailed explanation, please see the `R` vignette (to come).
+This example shows how to use `vimpy` in a simple setting with simulated data and using a single regression function. For more examples and detailed explanation, please see the [`R` vignette](https://cran.r-project.org/web/packages/vimp/vignettes/introduction_to_vimp.html).
 
 ```python
 ## load required libraries
@@ -88,39 +90,42 @@ small_fit = cv_small.best_estimator_.predict(x_small)
 ## get variable importance estimates
 ## -------------------------------------------------------------
 ## set up the vimp object
-vimp = vimpy.vimp_regression(y, x, full_fit, small_fit, s)
-## get the naive estimator
-vimp.plugin()
-## get the corrected estimator
-vimp.update()
-vimp.onestep_based_estimator()
+vimp = vimpy.vim(y = y, x = x, s = 1, pred_func = cv_full, measure_type = "r_squared")
+## get the point estimate of variable importance
+vimp.get_point_est()
+## get the influence function estimate
+vimp.get_influence_function()
 ## get a standard error
-vimp.onestep_based_se()
+vimp.get_se()
 ## get a confidence interval
 vimp.get_ci()
+## do a hypothesis test, compute p-value
+vimp.hypothesis_test(alpha = 0.05, delta = 0)
+## display the estimates, etc.
+vimp.vimp_
+vimp.se_
+vimp.ci_
+vimp.p_value_
+vimp.hyp_test_
 
 ## -------------------------------------------------------------
 ## get variable importance estimates using cross-validation
 ## -------------------------------------------------------------
-full_fits = [None]*V
-small_fits = [None]*V
-for v in range(V):
-    cv_full.fit(x[folds == v, :], y[folds == v])
-    full_fits[v] = cv_full.best_estimator_.predict(x[folds == v, :])
-    x_small = np.delete(x[folds == v, :], s, 1) # delete the columns in s
-    cv_small.fit(x_small, full_fits[v])
-    small_fits[v] = cv_small.best_estimator_.predict(x_small)
-
-## set up the outcome and vimp object
-ys = [y[folds == v] for v in range(V)]
-vimp_cv = vimpy.cv_vim(ys, x, full_fits, small_fits, V, folds, "regression", s)
-## get the naive estimator
-vimp_cv.plugin()
-## get the corrected estimator
-vimp_cv.update()
-vimp_cv.onestep_based_estimator()
-## get a standard error
-vimp_cv.onestep_based_se()
+## set up the vimp object
+vimp_cv = vimp.cv_vim(y = y, x = x, s = 1, pred_func = cv_full, V = 5, measure_type = "r_squared")
+## get the point estimate
+vimp_cv.get_point_est()
+## get the standard error
+vimp_cv.get_influence_function()
+vimp_cv.get_se()
 ## get a confidence interval
 vimp_cv.get_ci()
+## do a hypothesis test, compute p-value
+vimp_cv.hypothesis_test(alpha = 0.05, delta = 0)
+## display estimates, etc.
+vimp_cv.vimp_
+vimp_cv.se_
+vimp_cv.ci_
+vimp_cv.p_value_
+vimp_cv.hyp_test_
 ```
