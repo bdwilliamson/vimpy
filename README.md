@@ -1,4 +1,4 @@
-# vimpy: nonparametric variable importance assessment in python
+# Python/`vimpy`: inference on algorithm-agnostic variable importance <img src="docs/vimpy_logo.png" align="right" width="120px"/>
 
 [![PyPI version](https://badge.fury.io/py/vimpy.svg)](https://badge.fury.io/py/vimpy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -26,7 +26,7 @@ If you encounter any bugs or have any specific feature requests, please [file an
 
 ## Example
 
-This example shows how to use `vimpy` in a simple setting with simulated data and using a single regression function. For more examples and detailed explanation, please see the [`R` vignette](https://github.com/bdwilliamson/vimp/blob/master/vignettes/introduction_to_vimp.Rmd).
+This example shows how to use `vimpy` in a simple setting with simulated data and using a single regression function. For more examples and detailed explanation, please see the [`R` vignette](https://bdwilliamson.github.io/vimp/articles/introduction_to_vimp.html).
 
 ```python
 ## load required libraries
