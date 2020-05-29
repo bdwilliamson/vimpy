@@ -106,8 +106,7 @@ def cv_predictiveness_precomputed(x, y, S, measure, f, V = 5, stratified = True,
         for v in range(V):
             fold_cond = np.flatnonzero(folds == v)
             y_test = newy[folds == v]
-            preds_test = preds[folds == v]
-            preds_v = preds_test
+            preds_v = f[folds == v]
             preds[cc_cond[fold_cond]] = preds_v
             vs[v] = measure(y_test, preds_v)
             ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
