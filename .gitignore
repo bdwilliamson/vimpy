@@ -13,3 +13,7 @@ vimpy.egg*
 # -------------------
 venv/
 README_cv.md
+
+# test scripts
+# -------------------
+test_precompute_cv.py
