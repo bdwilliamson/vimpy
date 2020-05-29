@@ -73,18 +73,11 @@ param_grid = [{'n_estimators':ntrees, 'learning_rate':lr}]
 cv_full = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = param_grid, cv = 5)
 cv_small = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = param_grid, cv = 5)
 
-## fit the full regression
-# cv_full.fit(x, y)
-# full_fit = cv_full.best_estimator_.predict(x)
-
-## fit the reduced regression
-# x_small = np.delete(x, s, 1) # delete the columns in s
-# cv_small.fit(x_small, full_fit)
-# small_fit = cv_small.best_estimator_.predict(x_small)
-
 ## -------------------------------------------------------------
 ## get variable importance estimates
 ## -------------------------------------------------------------
+# set seed
+np.random.seed(12345)
 ## set up the vimp object
 vimp = vimpy.vim(y = y, x = x, s = 1, pred_func = cv_full, measure_type = "r_squared")
 ## get the point estimate of variable importance
@@ -104,6 +97,38 @@ vimp.ci_
 vimp.p_value_
 vimp.hyp_test_
 
+## -------------------------------------------------------------
+## using precomputed fitted values
+## -------------------------------------------------------------
+np.random.seed(12345)
+folds_outer = np.random.choice(a = np.arange(2), size = n, replace = True, p = np.array([0.5, 0.5]))
+## fit the full regression
+cv_full.fit(x[folds_outer == 1, :], y[folds_outer == 1])
+full_fit = cv_full.best_estimator_.predict(x[folds_outer == 1, :])
+
+## fit the reduced regression
+x_small = np.delete(x[folds_outer == 0, :], s, 1) # delete the columns in s
+cv_small.fit(x_small, y[folds_outer == 0])
+small_fit = cv_small.best_estimator_.predict(x_small)
+## get variable importance estimates
+np.random.seed(12345)
+vimp_precompute = vimpy.vim(y = y, x = x, s = 1, f = full_fit, r = small_fit, measure_type = "r_squared", folds = folds_outer)
+## get the point estimate of variable importance
+vimp_precompute.get_point_est()
+## get the influence function estimate
+vimp_precompute.get_influence_function()
+## get a standard error
+vimp_precompute.get_se()
+## get a confidence interval
+vimp_precompute.get_ci()
+## do a hypothesis test, compute p-value
+vimp_precompute.hypothesis_test(alpha = 0.05, delta = 0)
+## display the estimates, etc.
+vimp_precompute.vimp_
+vimp_precompute.se_
+vimp_precompute.ci_
+vimp_precompute.p_value_
+vimp_precompute.hyp_test_
 ## -------------------------------------------------------------
 ## get variable importance estimates using cross-validation
 ## -------------------------------------------------------------

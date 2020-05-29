@@ -4,8 +4,8 @@
 ## import required libraries
 import numpy as np
 from scipy.stats import norm
-from .predictiveness_measures import cv_predictiveness
-from .vimpy_utils import get_measure_function
+from .predictiveness_measures import cv_predictiveness, cv_predictiveness_precomputed
+from .vimpy_utils import get_measure_function, make_folds
 
 
 class vim:
@@ -19,13 +19,15 @@ class vim:
     @param pred_func the function that predicts outcome given features
     @param f fitted values from regression of outcome on all features (only used if pred_func is not specified)
     @param r fitted values from regression of outcome on reduced set of features (only used if pred_func is not specified)
+    @param folds outer folds, for hypothesis testing (only used if pred_func is not specified)
     @param na_rm remove NAs prior to computing predictiveness? (defaults to False)
 
     @return an object of class vim
     """
-    def __init__(self, y, x, s, measure_type, pred_func = None, f = None, r = None, na_rm = False):
+    def __init__(self, y, x, s, measure_type, pred_func = None, f = None, r = None, folds = None, na_rm = False):
         self.y_ = y
         self.x_ = x
+        self.s_ = s
         self.n_ = y.shape[0]
         self.p_ = x.shape[1]
         self.pred_func_ = pred_func
@@ -34,7 +36,6 @@ class vim:
         assert (pred_func is not None or (f is not None and r is not None))
         self.measure_type_ = measure_type
         self.measure_ = get_measure_function(measure_type)
-        self.ic_ = []
         self.vimp_ = []
         self.se_ = []
         self.ci_ = []
@@ -43,25 +44,46 @@ class vim:
         self.p_value_ = []
         self.v_full_ = []
         self.preds_full_ = []
-        self.ic_full_ = []
         self.v_redu_ = []
         self.preds_redu_ = []
-        self.ic_redu_ = []
         self.se_full_ = []
         self.se_redu_ = []
         self.ci_full_ = []
         self.ci_redu_ = []
         ## set up outer folds for hypothesis testing
-        self.folds_outer_ = np.random.choice(a = np.arange(2), size = self.n_, replace = True, p = np.array([0.5, 0.5]))
+        if folds is None:
+            self.folds_outer_ = np.random.choice(a = np.arange(2), size = self.n_, replace = True, p = np.array([0.5, 0.5]))
+        else:
+            assert (f is not None)
+            self.folds_outer_ = folds
+        self.folds_inner_1 = []
+        self.folds_inner_0 = []
+        self.cc_1 = []
+        self.cc_0 = []
+        self.ic_ = np.zeros((max(np.sum(self.folds_outer_ == 0), np.sum(self.folds_outer_ == 1))))
+        self.ic_full_ = np.zeros((max(np.sum(self.folds_outer_ == 0), np.sum(self.folds_outer_ == 1))))
+        self.ic_redu_ = np.zeros((max(np.sum(self.folds_outer_ == 0), np.sum(self.folds_outer_ == 1))))
         ## if only two unique values in y, assume binary
         self.binary_ = (np.unique(y).shape[0] == 2)
         self.na_rm_ = na_rm
 
     ## calculate the variable importance estimate
     def get_point_est(self):
-        self.v_full_, self.preds_full_, self.ic_full_ = cv_predictiveness(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], np.arange(self.p_), self.measure_, self.pred_func_, V = 1, stratified = self.binary_, na_rm = self.na_rm_)
-        self.v_redu_, self.preds_redu_, self.ic_redu_ = cv_predictiveness(self.x_[self.folds_outer_ == 0, :], self.y_[self.folds_outer_ == 0], np.arange(self.p_).delete(self.s_), self.measure_, self.pred_func_, V = 1, stratified = self.binary_, na_rm = self.na_rm_)
+        if self.pred_func_ is not None:
+            predictiveness_func = cv_predictiveness
+            this_full_func = self.pred_func_
+            this_redu_func = self.pred_func_
+            folds = None
+        else:
+            predictiveness_func = cv_predictiveness_precomputed
+            this_full_func = self.f_
+            this_redu_func = self.r_
+            folds = None
+        self.v_full_, self.preds_full_, ic_full, self.folds_inner_1, self.cc_1 = predictiveness_func(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], np.arange(self.p_), self.measure_, this_full_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_, folds = folds)
+        self.v_redu_, self.preds_redu_, ic_redu, self.folds_inner_0, self.cc_0 = predictiveness_func(self.x_[self.folds_outer_ == 0, :], self.y_[self.folds_outer_ == 0], np.delete(np.arange(self.p_), self.s_), self.measure_, this_redu_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_, folds = folds)
         self.vimp_ = self.v_full_ - self.v_redu_
+        self.ic_full_[:ic_full.shape[0]] = ic_full
+        self.ic_redu_[:ic_redu.shape[0]] = ic_redu
         return self
 
     ## calculate the influence function
@@ -79,12 +101,10 @@ class vim:
     ## calculate the ci based on the estimate and the standard error
     def get_ci(self, level = 0.95):
         ## get alpha from the level
-        a = (1 - level)/2.
+        a = (1 - level) / 2.
         a = np.array([a, 1 - a])
         ## calculate the quantiles
         fac = norm.ppf(a)
-        ## set up the ci array
-        ci = np.zeros((self.vimp_.shape[0], 2))
         ## create cis for vimp, predictiveness
         self.ci_ = self.vimp_ + np.outer((self.se_), fac)
         self.ci_full_ = self.v_full_ + np.outer((self.se_full_), fac)
@@ -94,6 +114,6 @@ class vim:
     ## do a hypothesis test
     def hypothesis_test(self, alpha = 0.05, delta = 0):
         self.test_statistic_ = (self.v_full_ - self.v_redu_ - delta) / np.sqrt(self.se_full_ ** 2 + self.se_redu_ ** 2)
-        self.p_value_ = 1 - norm.ppf(self.test_statistic_)
+        self.p_value_ = 1 - norm.cdf(self.test_statistic_)
         self.hyp_test_ = self.p_value_ < alpha
         return(self)

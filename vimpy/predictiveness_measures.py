@@ -2,7 +2,7 @@
 
 
 # general cv predictiveness
-def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_rm = False):
+def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_rm = False, folds = None):
     """
     Compute a cross-validated measure of predictiveness based on the data and the chosen measure
 
@@ -14,6 +14,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
     @param V: the number of CV folds
     @param stratified: should the folds be stratified?
     @param na_rm: should we do a complete-case analysis (True) or not (False)
+    @param folds (dummy)
 
     @return cross-validated measure of predictiveness, along with preds and ics
     """
@@ -55,7 +56,62 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
             preds[cc_cond[fold_cond]] = preds_v
             vs[v] = measure(y_test, preds_v)
             ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
-    return np.mean(vs), preds, ics
+    return np.mean(vs), preds, ics, folds, cc
+
+
+# general predictiveness based on precomputed fits
+def cv_predictiveness_precomputed(x, y, S, measure, f, V = 5, stratified = True, folds = None, na_rm = False):
+    """
+    Compute a cross-validated measure of predictiveness based on the data, the chosen measure, and the sets of fitted values f and r
+
+    @param x: the features
+    @param y: the outcome
+    @param S: the covariates to fit
+    @param measure: measure of predictiveness
+    @param f: fitted values based on S
+    @param V: the number of CV folds
+    @param stratified: should the folds be stratified?
+    @param folds: the CV folds
+    @param na_rm: should we do a complete-case analysis (True) or not (False)
+
+    @return cross-validated measure of predictiveness, along with preds and ics
+    """
+    import numpy as np
+    from .vimpy_utils import make_folds
+    ## if na_rm = True, do a complete-case analysis
+    if na_rm:
+        xs = x[:, S]
+        cc = np.sum(np.isnan(xs), axis = 1) == 0
+        newy = y[cc]
+    else:
+        cc = np.repeat(True, x.shape[0])
+        newy = y
+    ## set up CV folds
+    if folds is None:
+        folds = make_folds(newy, V, stratified = stratified)
+    ## do CV
+    preds = np.empty((y.shape[0],))
+    preds.fill(np.nan)
+    ics = np.empty((y.shape[0],))
+    ics.fill(np.nan)
+    vs = np.empty((V,))
+    cc_cond = np.flatnonzero(cc)
+    if V == 1:
+        y_train = newy
+        preds_v = f
+        preds[cc_cond] = preds_v[cc_cond]
+        vs[0] = measure(y_train, preds_v)
+        ics[cc_cond] = compute_ic(y_train, preds_v, measure.__name__)
+    else:
+        for v in range(V):
+            fold_cond = np.flatnonzero(folds == v)
+            y_test = newy[folds == v]
+            preds_test = preds[folds == v]
+            preds_v = preds_test
+            preds[cc_cond[fold_cond]] = preds_v
+            vs[v] = measure(y_test, preds_v)
+            ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
+    return np.mean(vs), preds, ics, folds, cc
 
 
 def accuracy(y, preds):
@@ -340,7 +396,7 @@ def one_deviance_ic(y, preds):
     ic_cross_entropy = (-2) * np.sum(y * np.log(preds), axis = 1) - cross_entropy
     ic_denom = ((-1.) / p) * ((y == 1) - p)
     grad = np.array([1. / denom, (-1) * cross_entropy / (denom ** 2)])
-    return np.dot(grad, np.transpose(np.hstack(ic_cross_entropy, ic_denom)))
+    return np.dot(grad, np.stack((ic_cross_entropy, ic_denom)))
 
 
 def r_squared_ic(y, preds):
@@ -378,4 +434,4 @@ def one_r2_ic(y, preds):
     ic_mse = (y.reshape(preds.shape) - preds) ** 2 - mse
     ic_var = (y - np.mean(y)) ** 2 - var
     grad = np.array([1. / var, (-1) * mse / (var ** 2)])
-    return np.dot(grad, np.transpose(np.hstack(ic_mse, ic_var)))
+    return np.dot(grad, np.stack((ic_mse, ic_var)))
