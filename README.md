@@ -133,29 +133,7 @@ vimp_precompute.hyp_test_
 ## -------------------------------------------------------------
 ## get variable importance estimates using cross-validation
 ## -------------------------------------------------------------
-np.random.seed(5678)
-folds_inner_1 = np.random.choice(a = np.arange(5), size = np.sum(folds_outer == 1), replace = True)
-folds_inner_0 = np.random.choice(a = np.arange(5), size = np.sum(folds_outer == 0), replace = True)
-folds = [folds_outer, folds_inner_1, folds_inner_0]
-x_1, y_1 = x[folds_outer == 1, :], y[folds_outer == 1]
-x_0, y_0 = x[folds_outer == 0, :], y[folds_outer == 0]
-preds_f = np.empty((y_1.shape[0],))
-preds_f.fill(np.nan)
-preds_r = np.empty((y_0.shape[0],))
-preds_r.fill(np.nan)
-for v in range(5):
-    fold_cond_1 = np.flatnonzero(folds_inner_1 == v)
-    fold_cond_0 = np.flatnonzero(folds_inner_0 == v)
-    x_train_0, y_train_0 = x_0[folds_inner_0 != v, :], y_0[folds_inner_0 != v]
-    x_test_0, y_test_0 = x_0[folds_inner_0 == v, :], y_0[folds_inner_0 == v]
-    x_train_1, y_train_1 = x_1[folds_inner_1 != v, :], y_1[folds_inner_1 != v]
-    x_test_1, y_test_1 = x_1[folds_inner_1 == v, :], y_1[folds_inner_1 == v]
-    cv_full.fit(x_train_1, np.ravel(y_train_1))
-    preds_v_1 = cv_full.predict(x_test_1)
-    cv_full.fit(x_train_0[:, np.delete(np.arange(p), 1)], np.ravel(y_train_0))
-    preds_v_0 = cv_full.predict(x_test_0[:, np.delete(np.arange(p), 1)])
-    preds_f[fold_cond_1] = preds_v_1
-    preds_r[fold_cond_0] = preds_v_0
+np.random.seed(12345)
 ## set up the vimp object
 vimp_cv = vimpy.cv_vim(y = y, x = x, s = 1, pred_func = cv_full, V = 5, measure_type = "r_squared")
 ## get the point estimate
