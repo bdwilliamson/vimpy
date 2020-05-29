@@ -43,7 +43,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
         pred_func.fit(x_train[:, S], np.ravel(y_train))
         preds_v = pred_func.predict(x_train[:, S])
         preds[cc_cond] = preds_v
-        vs[v] = measure(y_train, preds_v)
+        vs[0] = measure(y_train, preds_v)
         ics[cc_cond] = compute_ic(y_train, preds_v, measure.__name__)
     else:
         for v in range(V):
