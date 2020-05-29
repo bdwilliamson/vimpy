@@ -2,7 +2,7 @@
 
 
 # general cv predictiveness
-def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_rm = False, folds = None):
+def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_rm = False, folds = None, ensemble = False):
     """
     Compute a cross-validated measure of predictiveness based on the data and the chosen measure
 
@@ -15,6 +15,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
     @param stratified: should the folds be stratified?
     @param na_rm: should we do a complete-case analysis (True) or not (False)
     @param folds (dummy)
+    @param ensemble is this an ensemble (True) or not (False)
 
     @return cross-validated measure of predictiveness, along with preds and ics
     """
@@ -42,7 +43,13 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
     if V == 1:
         x_train, y_train = newx, newy
         pred_func.fit(x_train[:, S], np.ravel(y_train))
-        preds_v = pred_func.predict(x_train[:, S])
+        if ensemble:
+            preds_v = np.mean(pred_func.transform(x_train[:, S]))
+        else:
+            if measure.__name__ in ["r_squared"]:
+                preds_v = pred_func.predict(x_train[:, S])
+            else:
+                preds_v = pred_func.predict_proba(x_train[:, S])
         preds[cc_cond] = preds_v
         vs[0] = measure(y_train, preds_v)
         ics[cc_cond] = compute_ic(y_train, preds_v, measure.__name__)
@@ -52,7 +59,13 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
             x_train, y_train = newx[folds != v, :], newy[folds != v]
             x_test, y_test = newx[folds == v, :], newy[folds == v]
             pred_func.fit(x_train[:, S], np.ravel(y_train))
-            preds_v = pred_func.predict(x_test[:, S])
+            if ensemble:
+                preds_v = np.mean(pred_func.transform(x_test[:, S]))
+            else:
+                if measure.__name__ in ["r_squared"]:
+                    preds_v = pred_func.predict(x_test[:, S])
+                else:
+                    preds_v = pred_func.predict_proba(x_test[:, S])
             preds[cc_cond[fold_cond]] = preds_v
             vs[v] = measure(y_test, preds_v)
             ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
