@@ -1,12 +1,12 @@
 ## utility functions
 
-import warnings
-
 
 def deprecated(func):
     '''This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
     when the function is used.'''
+    import warnings
+
     def new_func(*args, **kwargs):
         warnings.warn("Call to deprecated function {}.".format(func.__name__),
                       category=DeprecationWarning)
@@ -19,20 +19,22 @@ def deprecated(func):
 
 ## get the measure function, IC function
 def get_measure_function(type):
+    from .predictiveness_measures import r_squared, accuracy, auc, deviance
     if type == "r_squared":
-        measure = mp.r_squared
+        measure = r_squared
     elif type == "accuracy":
-        measure = mp.accuracy
+        measure = accuracy
     elif type == "auc":
-        measure = mp.auc
+        measure = auc
     elif type == "deviance":
-        measure = mp.deviance
+        measure = deviance
     else:
         raise ValueError("We do not currently support the entered predictiveness measure. Please provide a different predictiveness measure.")
     return measure
 
 
 def choose(n, k):
+    import math
     return int(math.factorial(n) / (math.factorial(k) * math.factorial(n - k)))
 
 

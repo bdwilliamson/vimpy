@@ -1,8 +1,7 @@
 ## Compute predictiveness measures and their corresponding influence functions
 
-## ----------------------------------------------------------------
-## predictiveness measures
-## ----------------------------------------------------------------
+
+# general cv predictiveness
 def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_rm = False):
     """
     Compute a cross-validated measure of predictiveness based on the data and the chosen measure
@@ -19,7 +18,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
     @return cross-validated measure of predictiveness, along with preds and ics
     """
     import numpy as np
-    import utils as uts
+    from .vimpy_utils import make_folds
     ## if na_rm = True, do a complete-case analysis
     if na_rm:
         xs = x[:, S]
@@ -31,7 +30,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
         newx = x
         newy = y
     ## set up CV folds
-    folds = uts.make_folds(newy, V, stratified = stratified)
+    folds = make_folds(newy, V, stratified = stratified)
     ## do CV
     preds = np.empty((y.shape[0],))
     preds.fill(np.nan)
@@ -39,16 +38,25 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
     ics.fill(np.nan)
     vs = np.empty((V,))
     cc_cond = np.flatnonzero(cc)
-    for v in range(V):
-        fold_cond = np.flatnonzero(folds == v)
-        x_train, y_train = newx[folds != v, :], newy[folds != v]
-        x_test, y_test = newx[folds == v, :], newy[folds == v]
+    if V == 1:
+        x_train, y_train = newx, newy
         pred_func.fit(x_train[:, S], np.ravel(y_train))
-        preds_v = pred_func.predict(x_test[:, S])
-        preds[cc_cond[fold_cond]] = preds_v
-        vs[v] = measure(y_test, preds_v)
-        ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
+        preds_v = pred_func.predict(x_train[:, S])
+        preds[cc_cond] = preds_v
+        vs[v] = measure(y_train, preds_v)
+        ics[cc_cond] = compute_ic(y_train, preds_v, measure.__name__)
+    else:
+        for v in range(V):
+            fold_cond = np.flatnonzero(folds == v)
+            x_train, y_train = newx[folds != v, :], newy[folds != v]
+            x_test, y_test = newx[folds == v, :], newy[folds == v]
+            pred_func.fit(x_train[:, S], np.ravel(y_train))
+            preds_v = pred_func.predict(x_test[:, S])
+            preds[cc_cond[fold_cond]] = preds_v
+            vs[v] = measure(y_test, preds_v)
+            ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
     return np.mean(vs), preds, ics
+
 
 def accuracy(y, preds):
     """
@@ -100,7 +108,6 @@ def cross_entropy(y, preds):
     @return the cross-entropy
     """
     import sklearn.metrics as skm
-    import numpy as np
 
     if len(preds.shape) == 2:
         if preds.shape[1] > 1:
@@ -168,8 +175,6 @@ def compute_ic(y, preds, measure):
 
     @return an n-vector of the IC for the given predictiveness measure
     """
-    import numpy as np
-    import sklearn.metrics as skm
 
     ## do the correct thing
     if measure == "accuracy":
@@ -264,7 +269,7 @@ def one_auc_ic(y, preds):
     return contrib_1 + contrib_0 - ((y == 0).reshape(preds.shape) / p_0 + (y == 1).reshape(preds.shape) / p_1) * auc
 
 
-def deviance_ic(y, preds):
+def cross_entropy_ic(y, preds):
     """
     Compute the IC for cross-entropy
 
@@ -295,7 +300,6 @@ def one_cross_entropy_ic(y, preds):
     import sklearn.metrics as skm
     import numpy as np
     cross_entropy = (-2) * skm.log_loss(y_true = y, y_pred = preds, normalize = True)
-    p = np.mean(y, axis = 0)
     ic_cross_entropy = (-2) * np.sum(y * np.log(preds), axis = 1) - cross_entropy
     return ic_cross_entropy
 
