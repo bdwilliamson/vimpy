@@ -43,14 +43,10 @@ def cond_mean(x = None):
     f1 = np.where(np.logical_and(-2 <= x[:, 0], x[:, 0] < 2), np.floor(x[:, 0]), 0)
     f2 = np.where(x[:, 1] <= 0, 1, 0)
     f3 = np.where(x[:, 2] > 0, 1, 0)
-
     f6 = np.absolute(x[:, 5]/4) ** 3
     f7 = np.absolute(x[:, 6]/4) ** 5
-
     f11 = (7./3)*np.cos(x[:, 10]/2)
-
     ret = f1 + f2 + f3 + f6 + f7 + f11
-
     return ret
 
 ## create data
@@ -68,8 +64,8 @@ y = cond_mean(x) + np.random.normal(0, 1, n)
 ## preliminary step: get regression estimators
 ## -------------------------------------------------------------
 ## use grid search to get optimal number of trees and learning rate
-ntrees = np.arange(100, 3500, 500)
-lr = np.arange(.01, .5, .05)
+ntrees = np.arange(100, 500, 100)
+lr = np.arange(.01, .1, .05)
 
 param_grid = [{'n_estimators':ntrees, 'learning_rate':lr}]
 
@@ -78,13 +74,13 @@ cv_full = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), pa
 cv_small = GridSearchCV(GradientBoostingRegressor(loss = 'ls', max_depth = 1), param_grid = param_grid, cv = 5)
 
 ## fit the full regression
-cv_full.fit(x, y)
-full_fit = cv_full.best_estimator_.predict(x)
+# cv_full.fit(x, y)
+# full_fit = cv_full.best_estimator_.predict(x)
 
 ## fit the reduced regression
-x_small = np.delete(x, s, 1) # delete the columns in s
-cv_small.fit(x_small, full_fit)
-small_fit = cv_small.best_estimator_.predict(x_small)
+# x_small = np.delete(x, s, 1) # delete the columns in s
+# cv_small.fit(x_small, full_fit)
+# small_fit = cv_small.best_estimator_.predict(x_small)
 
 ## -------------------------------------------------------------
 ## get variable importance estimates
