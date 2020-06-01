@@ -47,9 +47,27 @@ class spvim:
         self.G_ = np.vstack((np.append(1, np.zeros(self.p_)), np.ones(self.p_ + 1) - np.append(1, np.zeros(self.p_))))
         ## set up outer folds for hypothesis testing
         self.folds_outer_ = np.random.choice(a = np.arange(2), size = self.n_, replace = True, p = np.array([0.25, 0.75]))
+        self.folds_inner_ = []
         ## if only two unique values in y, assume binary
         self.binary_ = (np.unique(y).shape[0] == 2)
         self.ensemble_ = ensemble
+        self.cc_ = []
+
+    def _get_kkt_matrix(self):
+        # kkt matrix for constrained wls
+        A_W = np.sqrt(self.W_).dot(self.Z_)
+        kkt_matrix_11 = 2 * A_W.transpose().dot(A_W)
+        kkt_matrix_12 = self.G_.transpose()
+        kkt_matrix_21 = self.G_
+        kkt_matrix_22 = np.zeros((kkt_matrix_21.shape[0], kkt_matrix_12.shape[1]))
+        kkt_matrix = np.vstack((np.hstack((kkt_matrix_11, kkt_matrix_12)), np.hstack((kkt_matrix_21, kkt_matrix_22))))
+        return(kkt_matrix)
+
+    def _get_ls_matrix(self, c_n):
+        A_W = np.sqrt(self.W_).dot(self.Z_)
+        v_W = np.sqrt(self.W_).dot(self.v_)
+        ls_matrix = np.vstack((2 * A_W.transpose().dot(v_W.reshape((len(v_W), 1))), c_n.reshape((c_n.shape[0], 1))))
+        return(ls_matrix)
 
     ## calculate the point estimates
     def get_point_est(self, gamma = 1):
@@ -70,7 +88,7 @@ class spvim:
         v_none = self.measure_(self.y_[self.folds_outer_ == 1], preds_none)
         ic_none = compute_ic(self.y_[self.folds_outer_ == 1], preds_none, self.measure_.__name__)
         ## get v, preds, ic for remaining non-null groups in S
-        v_lst, preds_lst, ic_lst = zip(*(cv_predictiveness(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], s, self.measure_, self.pred_func_, V = self.V_, stratified = self.binary_, na_rm = self.na_rm_) for s in S_lst[1:]))
+        v_lst, preds_lst, ic_lst, self.folds_inner_, self.cc_ = zip(*(cv_predictiveness(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], s, self.measure_, self.pred_func_, V = self.V_, stratified = self.binary_, na_rm = self.na_rm_) for s in S_lst[1:]))
         ## set up full lists
         v_lst_all = [v_none] + list(v_lst)
         ic_lst_all = [ic_none] + list(ic_lst)
@@ -79,19 +97,11 @@ class spvim:
         self.v_ = np.array(v_lst_all)
         self.v_ics_ = ic_lst_all
         c_n = np.array([v_none, v_lst_all[len(v_lst)] - v_none])
-        ## do constrained ls
-        A_W = np.sqrt(self.W_).dot(self.Z_)
-        v_W = np.sqrt(self.W_).dot(self.v_)
-        kkt_matrix_11 = 2 * A_W.transpose().dot(A_W)
-        kkt_matrix_12 = self.G_.transpose()
-        kkt_matrix_21 = self.G_
-        kkt_matrix_22 = np.zeros((kkt_matrix_21.shape[0], kkt_matrix_12.shape[1]))
-        kkt_matrix = np.vstack((np.hstack((kkt_matrix_11, kkt_matrix_12)), np.hstack((kkt_matrix_21, kkt_matrix_22))))
-        ls_matrix = np.vstack((2 * A_W.transpose().dot(v_W.reshape((len(v_W), 1))), c_n.reshape((c_n.shape[0], 1))))
+        kkt_matrix = self._get_kkt_matrix()
+        ls_matrix = self._get_ls_matrix(c_n)
         ls_solution = np.linalg.inv(kkt_matrix).dot(ls_matrix)
         self.vimp_ = ls_solution[0:(self.p_ + 1), :]
         self.lambdas_ = ls_solution[(self.p_ + 1):ls_solution.shape[0], :]
-
         return(self)
 
     ## calculate the influence function
