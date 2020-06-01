@@ -5,7 +5,7 @@
 import numpy as np
 from scipy.stats import norm
 from .predictiveness_measures import cv_predictiveness, cv_predictiveness_precomputed
-from .vimpy_utils import get_measure_function, make_folds
+from .vimpy_utils import get_measure_function
 
 
 class vim:

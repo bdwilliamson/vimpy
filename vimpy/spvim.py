@@ -4,9 +4,10 @@
 ## import required libraries
 import numpy as np
 from scipy.stats import norm
-import predictiveness_measures as mp
-import spvim_ic as sic
-import utils as uts
+from .predictiveness_measures import cv_predictiveness
+from .spvim_ic import shapley_influence_function, shapley_se
+from .vimpy_utils import get_measure_function
+
 
 class spvim:
 
