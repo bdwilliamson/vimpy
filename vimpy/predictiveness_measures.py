@@ -49,7 +49,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
             if measure.__name__ in ["r_squared"]:
                 preds_v = pred_func.predict(x_train[:, S])
             else:
-                preds_v = pred_func.predict_proba(x_train[:, S])
+                preds_v = pred_func.predict_proba(x_train[:, S])[:, 1]
         preds[cc_cond] = preds_v
         vs[0] = measure(y_train, preds_v)
         ics[cc_cond] = compute_ic(y_train, preds_v, measure.__name__)
@@ -73,7 +73,7 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
 
 
 # general predictiveness based on precomputed fits
-def cv_predictiveness_precomputed(x, y, S, measure, f, V = 5, stratified = True, folds = None, na_rm = False):
+def cv_predictiveness_precomputed(x, y, S, measure, f, V = 5, stratified = True, folds = None, na_rm = False, ensemble = False):
     """
     Compute a cross-validated measure of predictiveness based on the data, the chosen measure, and the sets of fitted values f and r
 
@@ -86,6 +86,7 @@ def cv_predictiveness_precomputed(x, y, S, measure, f, V = 5, stratified = True,
     @param stratified: should the folds be stratified?
     @param folds: the CV folds
     @param na_rm: should we do a complete-case analysis (True) or not (False)
+    @param ensemble: is this an ensemble or not (dummy)
 
     @return cross-validated measure of predictiveness, along with preds and ics
     """

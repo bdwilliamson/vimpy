@@ -17,6 +17,7 @@ class vim:
     @param s the feature group of interest
     @param measure_type the predictiveness measure to use (for now, one of "r_squared", "auc", "accuracy", "deviance")
     @param pred_func the function that predicts outcome given features
+    @param ensemble is pred_func an ensemble (True) or a single function (False, default)
     @param f fitted values from regression of outcome on all features (only used if pred_func is not specified)
     @param r fitted values from regression of outcome on reduced set of features (only used if pred_func is not specified)
     @param folds outer folds, for hypothesis testing (only used if pred_func is not specified)
@@ -24,7 +25,7 @@ class vim:
 
     @return an object of class vim
     """
-    def __init__(self, y, x, s, measure_type, pred_func = None, f = None, r = None, folds = None, na_rm = False):
+    def __init__(self, y, x, s, measure_type, pred_func = None, ensemble = False, f = None, r = None, folds = None, na_rm = False):
         self.y_ = y
         self.x_ = x
         self.s_ = s
@@ -66,6 +67,7 @@ class vim:
         ## if only two unique values in y, assume binary
         self.binary_ = (np.unique(y).shape[0] == 2)
         self.na_rm_ = na_rm
+        self.ensemble_ = ensemble
 
     ## calculate the variable importance estimate
     def get_point_est(self):
@@ -79,8 +81,8 @@ class vim:
             this_full_func = self.f_
             this_redu_func = self.r_
             folds = None
-        self.v_full_, self.preds_full_, ic_full, self.folds_inner_1, self.cc_1 = predictiveness_func(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], np.arange(self.p_), self.measure_, this_full_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_, folds = folds)
-        self.v_redu_, self.preds_redu_, ic_redu, self.folds_inner_0, self.cc_0 = predictiveness_func(self.x_[self.folds_outer_ == 0, :], self.y_[self.folds_outer_ == 0], np.delete(np.arange(self.p_), self.s_), self.measure_, this_redu_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_, folds = folds)
+        self.v_full_, self.preds_full_, ic_full, self.folds_inner_1, self.cc_1 = predictiveness_func(self.x_[self.folds_outer_ == 1, :], self.y_[self.folds_outer_ == 1], np.arange(self.p_), self.measure_, this_full_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_, folds = folds, ensemble = self.ensemble_)
+        self.v_redu_, self.preds_redu_, ic_redu, self.folds_inner_0, self.cc_0 = predictiveness_func(self.x_[self.folds_outer_ == 0, :], self.y_[self.folds_outer_ == 0], np.delete(np.arange(self.p_), self.s_), self.measure_, this_redu_func, V = 1, stratified = self.binary_, na_rm = self.na_rm_, folds = folds, ensemble = self.ensemble_)
         self.vimp_ = self.v_full_ - self.v_redu_
         self.ic_full_[:ic_full.shape[0]] = ic_full
         self.ic_redu_[:ic_redu.shape[0]] = ic_redu
