@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="vimpy",
-    version="2.0.2",
+    version="2.0.2.1",
     author="Brian Williamson",
     author_email="brianw26@uw.edu",
     description="vimpy: perform inference on algorithm-agnostic variable importance in python",

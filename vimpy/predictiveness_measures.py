@@ -442,9 +442,10 @@ def one_r2_ic(y, preds):
     """
     import sklearn.metrics as skm
     import numpy as np
-    mse = skm.mean_squared_error(y_true = y, y_pred = preds)
-    var = np.mean((y - np.mean(y)) ** 2)
-    ic_mse = (y.reshape(preds.shape) - preds) ** 2 - mse
-    ic_var = (y - np.mean(y)) ** 2 - var
+    y_flat = np.ravel(y)
+    mse = skm.mean_squared_error(y_true = y_flat, y_pred = preds)
+    var = np.mean((y_flat - np.mean(y_flat)) ** 2)
+    ic_mse = (y_flat - preds) ** 2 - mse
+    ic_var = (y_flat - np.mean(y_flat)) ** 2 - var
     grad = np.array([1. / var, (-1) * mse / (var ** 2)])
     return np.dot(grad, np.stack((ic_mse, ic_var)))
