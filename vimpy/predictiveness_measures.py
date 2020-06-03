@@ -46,10 +46,11 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
         if ensemble:
             preds_v = np.mean(pred_func.transform(x_train[:, S]))
         else:
-            if measure.__name__ in ["r_squared"]:
-                preds_v = pred_func.predict(x_train[:, S])
-            else:
+            try:
                 preds_v = pred_func.predict_proba(x_train[:, S])[:, 1]
+            except AttributeError:
+                preds_v = pred_func.predict(x_train[:, S])
+
         preds[cc_cond] = preds_v
         vs[0] = measure(y_train, preds_v)
         ics[cc_cond] = compute_ic(y_train, preds_v, measure.__name__)
@@ -62,10 +63,11 @@ def cv_predictiveness(x, y, S, measure, pred_func, V = 5, stratified = True, na_
             if ensemble:
                 preds_v = np.mean(pred_func.transform(x_test[:, S]))
             else:
-                if measure.__name__ in ["r_squared"]:
-                    preds_v = pred_func.predict(x_test[:, S])
-                else:
+                try:
                     preds_v = pred_func.predict_proba(x_test[:, S])[:, 1]
+                except AttributeError:
+                    preds_v = pred_func.predict(x_test[:, S])
+
             preds[cc_cond[fold_cond]] = preds_v
             vs[v] = measure(y_test, preds_v)
             ics[cc_cond[fold_cond]] = compute_ic(y_test, preds_v, measure.__name__)
