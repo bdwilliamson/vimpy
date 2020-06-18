@@ -8,11 +8,13 @@
 
 **Methodology authors:** [Brian Williamson](https://bdwilliamson.github.io/), [Peter Gilbert](https://www.fredhutch.org/en/faculty-lab-directory/gilbert-peter.html), [Noah Simon](http://faculty.washington.edu/nrsimon/), [Marco Carone](http://faculty.washington.edu/mcarone/about.html)
 
+**R package:** https://github.com/bdwilliamson/vimp
+
 ## Introduction
 
 In predictive modeling applications, it is often of interest to determine the relative contribution of subsets of features in explaining an outcome; this is often called variable importance. It is useful to consider variable importance as a function of the unknown, underlying data-generating mechanism rather than the specific predictive algorithm used to fit the data. This package provides functions that, given fitted values from predictive algorithms, compute nonparametric estimates of variable importance based on $R^2$, deviance, classification accuracy, and area under the receiver operating characteristic curve, along with asymptotically valid confidence intervals for the true importance.
 
-For more details, please see the accompanying manuscripts "Nonparametric variable importance assessment using machine learning techniques" by Williamson, Gilbert, Carone, and Simon (*Biometrics*, 2020) and ["A unified approach for inference on algorithm-agnostic variable importance"](https://arxiv.org/abs/2004.03683) by Williamson, Gilbert, Simon, and Carone (*arXiv*, 2020).
+For more details, please see the accompanying manuscripts "Nonparametric variable importance assessment using machine learning techniques" by Williamson, Gilbert, Carone, and Simon (*Biometrics*, 2020), ["A unified approach for inference on algorithm-agnostic variable importance"](https://arxiv.org/abs/2004.03683) by Williamson, Gilbert, Simon, and Carone (*arXiv*, 2020), and ["Efficient nonparametric statistical inference on population feature importance using Shapley values"](https://arxiv.org/abs/2006.09481) by Williamson and Feng (*arXiv*, 2020; to appear in the Proceedings of the Thirty-seventh International Conference on Machine Learning [ICML 2020]).
 
 ## Installation
 
@@ -152,3 +154,7 @@ vimp_cv.ci_
 vimp_cv.p_value_
 vimp_cv.hyp_test_
 ```
+
+## Logo
+
+The logo was created using [hexSticker](https://github.com/GuangchuangYu/hexSticker), [lisa](https://github.com/tyluRp/lisa), and a [python image](https://svgsilh.com/image/145410.html) distributed under the CC0 license. Many thanks to the maintainers of these packages and the [Color Lisa](https://lisa-pkg.netlify.app/) team.
