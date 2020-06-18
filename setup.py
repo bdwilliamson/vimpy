@@ -16,7 +16,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'numpy',
-        'scipy'
+        'scipy',
+        'scipy.stats'
     ],
     classifiers=(
         "Programming Language :: Python :: 3.3",

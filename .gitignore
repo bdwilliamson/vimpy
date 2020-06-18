@@ -13,6 +13,7 @@ olddist/*
 # virtual environment
 # -------------------
 venv/
+py3env
 README_cv.md
 
 # test scripts
