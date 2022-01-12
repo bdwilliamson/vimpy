@@ -25,7 +25,7 @@ class spvim:
         self.y_ = y
         self.x_ = x
         self.n_ = y.shape[0]
-        self.p_ = x.shape[0]
+        self.p_ = x.shape[1]
         self.pred_func_ = pred_func
         self.V_ = V
         self.measure_type_ = measure_type
