@@ -37,6 +37,7 @@ class spvim:
         self.cis_ = []
         self.na_rm_ = na_rm
         self.Z_ = []
+        self.z_counts_ = []
         self.v_ = []
         self.v_ics_ = []
         self.W_ = []
