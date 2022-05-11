@@ -115,7 +115,7 @@ class spvim:
 
     ## calculate standard errors
     def get_ses(self):
-        ses = [shapley_se(self.ics_, idx, self.gamma_) for idx in range(self.p_)]
+        ses = [shapley_se(self.ics_, idx, self.gamma_) for idx in range(self.p_ + 1)]
         self.ses_ = np.array(ses)
         return self
 
