@@ -108,7 +108,7 @@ class spvim:
 
     ## calculate the influence function
     def get_influence_functions(self):
-        c_n = np.array([self.v_[0], self.v_[self.v_.shape[0] - 1] - self.v_[0]])
+        c_n = np.array([self.v_[0], self.v_[self.v_.shape[0] - 1] - self.v_[0]], dtype = object)
         self.ics_ = shapley_influence_function(self.Z_, self.z_counts_, self.W_, self.v_, self.vimp_, self.G_, c_n, np.array(self.v_ics_), self.measure_.__name__)
         return self
 
