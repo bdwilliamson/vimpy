@@ -127,7 +127,7 @@ class spvim:
         ## calculate the quantiles
         fac = norm.ppf(a)
         ## create it
-        self.ci_ = self.vimp_ + np.outer((self.ses_), fac)
+        self.cis_ = self.vimp_ + np.outer((self.ses_), fac)
         return self
 
     ## do a hypothesis test
