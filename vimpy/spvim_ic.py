@@ -26,7 +26,7 @@ def shapley_influence_function(Z, z_counts, W, v, psi, G, c_n, ics, measure):
     U_2 = qr_decomp[0][:, 3:(Z.shape[1])]
     V = U_2.transpose().dot(Z.transpose().dot(W).dot(Z)).dot(U_2)
     phi_02_shared_mat = (-1) * U_2.dot(np.linalg.inv(V))
-    phi_02_uniq_vectors = np.array([(Z[z, :].dot(psi) - v[z]) * (U_2.transpose().dot(Z[z, :])) for z in range(Z.shape[0])], dtype = object).transpose()
+    phi_02_uniq_vectors = np.array([(Z[z, :].dot(psi) - v[z]) * (U_2.transpose().dot(Z[z, :])) for z in range(Z.shape[0])], dtype = np.float64).transpose()
     phi_02_uniq = phi_02_shared_mat.dot(phi_02_uniq_vectors)
     phi_02 = np.repeat(phi_02_uniq, z_counts, axis=1)
 
